@@ -39,8 +39,6 @@ Summarize your findings here. I've included some subheaders in a way that seems 
 
 ### Impact of preprocessing and outliers
 
-### Impact of preprocessing and outliers
-
 **Task 1: Log Transformation**
 
 We compared the distributions of four proteins (CEBPB, CHIP, NSE, and PIAS4) before and after log10 transformation. The raw data was **right-skewed**, with a **few extremely high values**, especially for CHIP and NSE. Log transformation made the distributions **more symmetric** and **reduced the influence of extreme values**, making the data more suitable for statistical analysis.
