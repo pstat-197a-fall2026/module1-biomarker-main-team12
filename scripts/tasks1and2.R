@@ -26,6 +26,7 @@ proteins <- setdiff(names(biomarker_raw), c("group", "ados"))
 
 # ------------------------------------------------------------
 # TASK 1: WHY LOG-TRANSFORM PROTEIN LEVELS?
+# Question: What do you imagine is the reason for log-transforming the protein levels in biomarker-raw.csv?
 # ------------------------------------------------------------
 # Compare raw and log10 distributions for four example proteins.
 sample_proteins <- head(proteins, 4)
@@ -47,3 +48,9 @@ p_raw_log <- ggplot(sample_distributions, aes(x = level)) +
   ) +
   theme_minimal()
 print(p_raw_log)
+
+# The protein levels were likely log-transformed because the raw data are right-skewed, with most measurements clustered at lower values and a few extremely high values. 
+# This is especially noticeable for `CHIP` and `NSE`. 
+# Taking the log10 of the measurements reduces the influence of these extreme values and makes the distributions more symmetric and easier to compare. 
+# Log transformation can also help stabilize variability, making the data more suitable for statistical analysis.
+
