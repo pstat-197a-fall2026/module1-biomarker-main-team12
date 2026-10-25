@@ -54,3 +54,90 @@ print(p_raw_log)
 # Taking the log10 of the measurements reduces the influence of these extreme values and makes the distributions more symmetric and easier to compare. 
 # Log transformation can also help stabilize variability, making the data more suitable for statistical analysis.
 
+# ---------------------------------
+# TASK 2: EFFECT OF OUTLIER TRIMMING
+# Temporarily remove the outlier trimming from preprocessing and do some exploratory analysis of the outlying values. Are there specific subjects (not values) that seem to be outliers? If so, are outliers more frequent in one group or the other? (Hint: consider tabulating the number of outlying values per subject.)
+# ---------------------------------
+
+# Log-transform and standardize protein levels W/O trimming
+# Add a subject ID to track each individual
+biomarker_untrimmed <- biomarker_raw %>%
+  mutate(subject_id = row_number()) %>%
+  mutate(across(all_of(proteins),
+                ~ as.numeric(scale(log10(.x)))))
+
+# Identify outlying values (3+ stdev from mean) & count them for each subject
+subject_outliers <- biomarker_untrimmed %>%
+  pivot_longer(cols = all_of(proteins),
+               names_to = "protein",
+               values_to = "z_score") %>%
+  group_by(subject_id, group) %>%
+  summarise(
+    n_outliers = sum(abs(z_score) > 3, na.rm = TRUE),
+    .groups = "drop")
+
+# View subjects w/ the most outlying protein measurements
+top_subjects <- subject_outliers %>%
+  arrange(desc(n_outliers)) %>%
+  slice_head(n = 10)
+
+print(top_subjects)
+
+# Identify subjects in the highest 5% of outlier counts
+cutoff <- quantile(subject_outliers$n_outliers, 0.95)
+
+high_outlier_subjects <- subject_outliers %>%
+  filter(n_outliers >= cutoff) %>%
+  arrange(desc(n_outliers))
+
+print(high_outlier_subjects)
+
+# Compare outlier counts between ASD & TD groups
+group_summary <- subject_outliers %>%
+  group_by(group) %>%
+  summarise(
+    n_subjects = n(),
+    mean_outliers = mean(n_outliers),
+    median_outliers = median(n_outliers),
+    max_outliers = max(n_outliers),
+    n_high_outlier_subjects = sum(n_outliers >= cutoff),
+    .groups = "drop"
+  )
+
+print(group_summary)
+
+# Plot # of outlying values per subject by group
+p_outliers <- ggplot(subject_outliers,
+                     aes(x = group, y = n_outliers, color = group)) +
+  geom_boxplot(outlier.shape = NA) +
+  geom_jitter(width = 0.15, alpha = 0.6) +
+  geom_hline(yintercept = cutoff, linetype = "dashed") +
+  labs(
+    title = "Outlying protein measurements per subject",
+    x = "Group",
+    y = "Number of outlying protein measurements"
+  ) +
+  theme_minimal() +
+  guides(color = "none")
+
+print(p_outliers)
+
+# Plot the subjects w/ unusually high outlier counts
+p_top_subjects <- ggplot(high_outlier_subjects,
+                         aes(x = reorder(factor(subject_id), n_outliers),
+                             y = n_outliers,
+                             fill = group)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Subjects with the highest outlier counts",
+    x = "Subject ID",
+    y = "Number of outlying protein measurements"
+  ) +
+  theme_minimal()
+
+print(p_top_subjects)
+
+# Outlying measurements appear to be concentrated among certain subjects rather than evenly distributed across the dataset.
+# Although TD subjects had more outliers on average, both TD and ASD had similar medians, suggesting that the typical subject in each group had similar numbers of outlying measurements. 
+# These findings help explain why trimming may be useful for reducing the influence of extreme measurements on subsequent analyses.
