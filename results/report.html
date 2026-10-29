@@ -133,10 +133,40 @@ ul.task-list li input[type="checkbox"] {
 <section id="impact-of-preprocessing-and-outliers" class="level3">
 <h3 class="anchored" data-anchor-id="impact-of-preprocessing-and-outliers">Impact of preprocessing and outliers</h3>
 <p><strong>Task 1: Log Transformation</strong></p>
-<p>We compared the distributions of four proteins (CEBPB, CHIP, NSE, and PIAS4) before and after log10 transformation. The raw data was <strong>right-skewed</strong>, with a <strong>few extremely high values</strong>, especially for CHIP and NSE. Log transformation made the distributions <strong>more symmetric</strong> and <strong>reduced the influence of extreme values</strong>, making the data more suitable for statistical analysis.</p>
+<p>We compared the first four proteins in the data (CEBPB, CHIP, NSE, PIAS4) before and after a log10 transform.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="report_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>The raw levels are <strong>right-skewed</strong>. Most values are small and a few are very large, especially for CHIP and NSE. Protein levels span orders of magnitude, so a handful of huge values would dominate means and t-tests. Logging makes the distributions more symmetric and cuts the influence of those values.</p>
 <p><strong>Task 2: Outlier Trimming</strong></p>
-<p>We removed outlier trimming and counted the number of protein measurements more than three standard deviations from the mean for each subject. A few subjects had unusually many outliers, particularly subject 154 (TD) with 157, subject 108 (TD) with 127, and subject 9 (ASD) with 126.</p>
-<p><strong>TD subjects had more outliers on average</strong> than ASD subjects (17.6 vs.&nbsp;13.2), but both groups had the <strong>same median</strong> (8.5). Of the eight subjects with the highest outlier counts, five were TD and three were ASD. This suggests that <strong>outliers were slightly more common in the TD group</strong>, mainly due to a few extreme subjects, and that <strong>trimming may help reduce their influence on the analysis</strong>.</p>
+<p>We removed the trimming step and counted, for each subject, the protein measurements more than 3 SD from the mean. Outliers were concentrated in a few subjects. Subject 154 (TD) had the most with 157 outlying values, followed by subject 108 (TD) with 127 and subject 9 (ASD) with 126.</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 2 × 3
+  group mean_outliers median_outliers
+  &lt;chr&gt;         &lt;dbl&gt;           &lt;dbl&gt;
+1 ASD            13.2             8.5
+2 TD             17.6             8.5</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 5 × 3
+  subject_id group n_outliers
+       &lt;int&gt; &lt;chr&gt;      &lt;int&gt;
+1        154 TD           157
+2        108 TD           127
+3          9 ASD          126
+4        121 TD           122
+5         52 ASD          121</code></pre>
+</div>
+</div>
+<p>TD subjects averaged more outliers than ASD subjects (17.6 vs.&nbsp;13.3), but the medians were identical (8.5). The gap comes from a few extreme subjects like 154 and 108, not a general TD pattern. Of the eight subjects with the most outliers, five were TD and three were ASD, which is too few to show a real group difference. We see no clear difference between groups.</p>
+<p>Even the typical subject sits above what a normal distribution would give. A 3 SD cutoff across 1,317 proteins predicts about 3.6 outliers per subject, versus a median of 8.5 here. Since a small number of subjects contribute a large share of the extreme values, trimming limits how much they can sway the t-tests and the random forest.</p>
 </section>
 <section id="methodological-variations" class="level3">
 <h3 class="anchored" data-anchor-id="methodological-variations">Methodological variations</h3>

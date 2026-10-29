@@ -19,6 +19,25 @@ Use this as a template. Keep the headers and remove all other text. In all, your
 ```{r}
 # load any other packages and read data here
 library(tidyverse)
+
+
+var_names <- read_csv("../data/biomarker-raw.csv",
+                      col_names = FALSE, n_max = 2,
+                      col_select = -(1:2), show_col_types = FALSE) %>%
+  t() %>%
+  as_tibble() %>%
+  rename(name = V1, abbreviation = V2) %>%
+  na.omit()
+
+
+biomarker_raw <- read_csv("../data/biomarker-raw.csv",
+                          skip = 2, col_select = -2L,
+                          col_names = c("group", "empty",
+                                        pull(var_names, abbreviation), "ados"),
+                          na = c("-", ""), show_col_types = FALSE) %>%
+  filter(!is.na(group)) %>%
+  select(group, ados, everything())
+
 ```
 
 ## Abstract
@@ -65,13 +84,64 @@ Summarize your findings here. I've included some subheaders in a way that seems 
 
 **Task 1: Log Transformation**
 
-We compared the distributions of four proteins (CEBPB, CHIP, NSE, and PIAS4) before and after log10 transformation. The raw data was **right-skewed**, with a **few extremely high values**, especially for CHIP and NSE. Log transformation made the distributions **more symmetric** and **reduced the influence of extreme values**, making the data more suitable for statistical analysis.
+We compared the first four proteins in the data (CEBPB, CHIP, NSE, PIAS4) before and after a log10 transform.
+
+```{r}
+proteins <- setdiff(names(biomarker_raw), c("group", "ados"))
+sample_proteins <- head(proteins, 4)
+
+sample_distributions <- biomarker_raw %>%
+  select(all_of(sample_proteins)) %>%
+  pivot_longer(everything(), names_to = "protein", values_to = "raw_level") %>%
+  mutate(log_level = log10(raw_level)) %>%
+  pivot_longer(c(raw_level, log_level), names_to = "version", values_to = "level") %>%
+  mutate(version = recode(version, raw_level = "Raw", log_level = "Log10"))
+
+
+p_raw_log <- ggplot(sample_distributions, aes(x = level)) +
+  geom_histogram(bins = 25, fill = "steelblue", color = "white") +
+  facet_wrap(~ protein + version, scales = "free_x", ncol = 4) +
+  labs(
+    title = "Protein distributions before and after log10 transformation",
+    x = "Protein measurement (scale shown in panel)",
+    y = "Number of subjects"
+  ) +
+  theme_minimal()
+print(p_raw_log)
+```
+
+The raw levels are **right-skewed**. Most values are small and a few are very large, especially for CHIP and NSE. Protein levels span orders of magnitude, so a handful of huge values would dominate means and t-tests. Logging makes the distributions more symmetric and cuts the influence of those values.
 
 **Task 2: Outlier Trimming**
 
-We removed outlier trimming and counted the number of protein measurements more than three standard deviations from the mean for each subject. A few subjects had unusually many outliers, particularly subject 154 (TD) with 157, subject 108 (TD) with 127, and subject 9 (ASD) with 126.
+We removed the trimming step and counted, for each subject, the protein measurements more than 3 SD from the mean. Outliers were concentrated in a few subjects. Subject 154 (TD) had the most with 157 outlying values, followed by subject 108 (TD) with 127 and subject 9 (ASD) with 126.
 
-**TD subjects had more outliers on average** than ASD subjects (17.6 vs. 13.2), but both groups had the **same median** (8.5). Of the eight subjects with the highest outlier counts, five were TD and three were ASD. This suggests that **outliers were slightly more common in the TD group**, mainly due to a few extreme subjects, and that **trimming may help reduce their influence on the analysis**.
+```{r}
+biomarker_untrimmed <- biomarker_raw %>%
+  mutate(subject_id = row_number()) %>%
+  mutate(across(all_of(proteins),
+                ~ as.numeric(scale(log10(.x)))))
+
+subject_outliers <- biomarker_untrimmed %>%
+  pivot_longer(cols = all_of(proteins),
+               names_to = "protein", values_to = "z_score") %>%
+  group_by(subject_id, group) %>%
+  summarise(n_outliers = sum(abs(z_score) > 3, na.rm = TRUE),
+            .groups = "drop")
+
+group_summary <- subject_outliers %>%
+  group_by(group) %>%
+  summarise(mean_outliers = mean(n_outliers),
+            median_outliers = median(n_outliers),
+            .groups = "drop")
+
+group_summary
+slice_max(subject_outliers, n_outliers, n = 5)
+```
+
+TD subjects averaged more outliers than ASD subjects (17.6 vs. 13.3), but the medians were identical (8.5). The gap comes from a few extreme subjects like 154 and 108, not a general TD pattern. Of the eight subjects with the most outliers, five were TD and three were ASD, which is too few to show a real group difference. We see no clear difference between groups.
+
+Even the typical subject sits above what a normal distribution would give. A 3 SD cutoff across 1,317 proteins predicts about 3.6 outliers per subject, versus a median of 8.5 here. Since a small number of subjects contribute a large share of the extreme values, trimming limits how much they can sway the t-tests and the random forest.
 
 ### Methodological variations
 
