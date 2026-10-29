@@ -19,7 +19,14 @@ Use this as a template. Keep the headers and remove all other text. In all, your
 ```{r}
 # load any other packages and read data here
 library(tidyverse)
-
+library(randomForest)
+library(infer)
+library(tidymodels)
+library(modelr)
+library(yardstick)
+library(glmnet)
+library(pROC)
+library(rsample)
 
 var_names <- read_csv("../data/biomarker-raw.csv",
                       col_names = FALSE, n_max = 2,
