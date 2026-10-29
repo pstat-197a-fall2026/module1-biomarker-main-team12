@@ -78,3 +78,22 @@ Task 3
 ### Improved classifier
 
 Task 4
+
+We looked for a simpler panel with comparable accuracy to the in-class panel (DERM, RELT, MRC2, IgD, Cadherin-5). The in-class single-split AUROC of 0.883 is optimistic, since proteins were chosen using all 154 subjects. So we benchmarked everything on the same 50 random 75/25 splits, stratified by group.
+
+On each split we fit a LASSO logistic regression with 5-fold CV on the training data only, at `lambda.min` and `lambda.1se`. We then took the three proteins the `lambda.1se` LASSO picked most often (DERM, IgD, MAPK2) as a fixed panel. A panel counts as *simpler* if it has fewer than 5 proteins and a mean AUROC within about one SD of the baseline. It counts as *improved* if it beats the baseline by about one SD. This is a heuristic, not a formal test.
+
+| Method                    | Mean test AUROC | SD    | Proteins |
+|---------------------------|-----------------|-------|----------|
+| In-class panel (baseline) | 0.806           | 0.062 | 5        |
+| LASSO, `lambda.1se`       | 0.784           | 0.066 | 15.5     |
+| LASSO, `lambda.min`       | 0.819           | 0.047 | 40.0     |
+| DERM + IgD + MAPK2        | 0.848           | 0.046 | 3        |
+
+![Test AUROC across 50 random splits.](task4-boxplot1.png)
+
+![In-class panel vs. 3-protein panel across 50 splits.](task4-boxplot2.png)
+
+Neither LASSO panel was simpler or better. The 3-protein panel scored 0.042 higher than the baseline on average (paired SD 0.041), which is less than the baseline's SD of 0.062. So we claim **comparable accuracy with fewer proteins**, not a proven improvement.
+
+*Caveats:* the in-class panel and the 3-protein panel were both chosen using data that also ended up in test sets, so both estimates are somewhat optimistic. With 154 subjects, AUROC swings a lot across splits, so small differences shouldn't be over-read.
