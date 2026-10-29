@@ -1,0 +1,113 @@
+---
+title: "task4 analysis"
+output: html_document
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+## Task 4: Alternative panel
+
+### Introduction
+
+From the in-class analysis, the data selected five proteins (DERM, RELT,
+MRC2, IgD, Cadherin-5) by intersecting the top 10 proteins from multiple
+testing and random forest importance. Then, a logistic regression was
+fitted on an 80/20 split. On that single split (31 test subjects) it
+achieved sensitivity 0.812, specificity 0.733, accuracy 0.774, and ROC
+AUC 0.883. This estimate is noisy and optimistic. The proteins were
+selected using all 154 subjects, including the test subjects.
+
+### Method
+
+In order to get a fairer benchmark, we evaluated every panel on the same
+50 random 75/25 splits (stratified by group). For each split we:
+
+1.  Fit an L1-penalized (LASSO) logistic regression with 5-fold
+    cross-validation on the **training data only**, and recorded the
+    panel at `lambda.min` (best CV AUC) and `lambda.1se` (sparser).
+2.  Computed test AUROC for both LASSO panels using the LASSO's own
+    predictions.
+3.  Refit the in-class 5-protein panel on the training data and computed
+    its test AUROC.
+
+We counted how often each protein was selected by the \`lambda.1se\`
+LASSO across the 50 splits. Since the LASSO panels were not simpler or
+better, we took the three most frequently selected proteins, DERM, IgD,
+MAPK2, as a fixed alternative panel, and evaluated it with a logistic
+regression on the same 50 splits, alongside the in-class panel.
+
+**Decision rule.**
+
+A panel is counted as *improved* if its mean test AUROC exceeded the
+in-class panel's by roughly one standard deviation across splits. It is
+counted as *simpler* if it used fewer than 5 proteins with mean AUROC
+and no more than roughly one standard deviation below the in-class
+panel’s. This is a heuristic, not a formal test. We compared against the
+in-class panel's repeated-split AUROC, not the single-split 0.883, since
+the two are not measured the same way.
+
+### Results
+
+| Method                    | Mean test AUROC | SD    | Mean panel size |
+|---------------------------|-----------------|-------|-----------------|
+| In-class panel (baseline) | 0.806           | 0.062 | 5               |
+| LASSO, `lambda.1se`       | 0.784           | 0.066 | 15.5            |
+| LASSO, `lambda.min`       | 0.819           | 0.047 | 40.0            |
+
+![Test AUROC across 50 random splits: in-class panel vs.
+LASSO.](../results/task4-boxplot1.png)
+
+Neither LASSO panel met our criteria. `lambda.min` was higher than the
+baseline by only 0.013, less than one SD, while using about eight times
+as many proteins (40.0). `lambda.1se` was slightly worse and still
+larger than the baseline panel (15.5).
+
+The most frequently selected proteins by the `lambda.1se` LASSO were
+DERM (48 of 50 splits), IgD (43), MAPK2 (41), 14-3-3 protein zeta/delta
+(26), and RELT (25). DERM, IgD, and RELT are in the in-class panel,
+MAPK2 and 14-3-3 protein zeta/delta are not, and MRC2 and Cadherin-5
+from the in-class panel were not among the 15 most frequently selected.
+
+Since the LASSO panels were not simpler or better, we evaluated a fixed
+3-protein panel made of the three most frequently selected proteins
+(DERM, IgD, MAPK2) on the same 50 splits:
+
+| Method                              | Mean test AUROC | SD    | Proteins |
+|-------------------------------------|-----------------|-------|----------|
+| In-class panel                      | 0.806           | 0.062 | 5        |
+| 3 protein panel: DERM + IgD + MAPK2 | 0.848           | 0.046 | 3        |
+
+Mean paired difference (3-protein minus in-class): 0.042 (SD 0.041).
+
+![In-class panel vs. 3-protein panel across 50
+splits.](../results/task4-boxplot2.png)
+
+### Conclusion
+
+A 3-protein panel (DERM, IgD, MAPK2) achieved a mean test AUROC of 0.848
+compared with 0.806 for the 5-protein in-class panel on the same 50
+splits. Therefore, the 3-protein panel is a simpler panel that achieved
+a comparable AUROC. This is deemed as simpler under our decision rule
+since it uses fewer proteins and the AUROC is at least as high. The
+AUROC difference (+0.042) is smaller than one standard deviation of the
+in-class panel's AUROC across splits (0.062), so it does not meet our
+criterion for an improved panel. We therefore claim comparable accuracy
+with fewer proteins, not a demonstrated gain in accuracy. Two of the
+three proteins (DERM, IgD) are in the in-class panel, and MAPK2 is not.
+
+### Limitations
+
+-   The in-class single-split result (AUROC 0.883) and our
+    repeated-split results are not directly comparable. The in-class
+    panel's mean AUROC across 50 splits (0.806) is a more realistic
+    estimate of its accuracy.
+
+-   The in-class panel was selected using all 154 subjects, and the
+    3-protein panel was chosen using selection counts across all 50
+    splits. In both cases the test data influenced the choice, so both
+    estimates are somewhat optimistic.
+
+-   With 154 subjects, AUROC varies noticeably across splits (SD about
+    0.05 to 0.07), so small differences between panels should not be
+    over-interpreted.
