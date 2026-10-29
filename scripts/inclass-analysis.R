@@ -38,6 +38,8 @@ ttests_out <- biomarker_clean %>%
          rank = row_number(),
          p.adj = m*hm*p_value/rank)
 
+ttests_out
+
 # select significant proteins
 proteins_s1 <- ttests_out %>%
   slice_min(p.adj, n = 10) %>%
@@ -98,6 +100,12 @@ class_metrics <- metric_set(sensitivity,
 
 testing(biomarker_split) %>%
   add_predictions(fit, type = 'response') %>%
-  class_metrics(estimate = factor(pred > 0.5),
-              truth = factor(class), pred,
-              event_level = 'second')
+  mutate(truth_f = factor(class, levels = c(FALSE, TRUE)),
+         est_f   = factor(pred > 0.5, levels = c(FALSE, TRUE))) %>%
+  class_metrics(truth = truth_f,
+                estimate = est_f,
+                pred,
+                event_level = 'second')
+
+class_metrics
+proteins_sstar
