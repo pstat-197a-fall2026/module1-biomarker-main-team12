@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Sami Gibson, Adrian Filip, Caroline Liu, Daniel Nickolov">
-<meta name="dcterms.date" content="2026-10-29">
+<meta name="dcterms.date" content="2026-10-30">
 
 <title>Biomarkers of ASD</title>
 <style>
@@ -75,7 +75,7 @@ ul.task-list li input[type="checkbox"] {
     <div>
     <div class="quarto-title-meta-heading">Updated</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">October 29, 2026</p>
+      <p class="date">October 30, 2026</p>
     </div>
   </div>
   
@@ -171,6 +171,11 @@ ul.task-list li input[type="checkbox"] {
 <section id="methodological-variations" class="level3">
 <h3 class="anchored" data-anchor-id="methodological-variations">Methodological variations</h3>
 <p>Task 3</p>
+<p>We tried the three modifications one at a time. Each was evaluated with a single 80/20 split, so test sets contain only 31 subjects and the results are noisy: one misclassified subject changes sensitivity by about 0.06. For comparison, the in-class panel (DERM, RELT, MRC2, IgD, Cadherin-5) had a test AUROC of 0.883 and accuracy of 0.774.</p>
+<p>Training partition. Choosing proteins using only the training subjects gave a 4-protein panel (DERM, IgD, TSP4, MRC2). It shares DERM, IgD, and MRC2 with the in-class panel. Test AUROC dropped from 0.883 to 0.846 and accuracy from 0.774 to 0.710, with sensitivity falling from 0.812 to 0.688 and specificity unchanged at 0.733. This is the expected direction, since in the in-class analysis the test subjects helped choose the proteins, which makes its results optimistic.</p>
+<p>More proteins per method. Using the top 15 from each method gave an 8-protein panel (DERM, RELT, IgD, PTN, FSTL1, MAPK2, TGF-b R III, gp130). Test AUROC was 0.857 and accuracy 0.710, so a larger list did not improve performance on this split.</p>
+<p>Fuzzy intersection. Taking the union of the two top-10 lists gave 16 proteins. Test AUROC was 0.781, the lowest of the three, with accuracy 0.742. With only 123 training subjects, a 16-protein model likely overfits.</p>
+<p>DERM and IgD appeared in every panel we built, so they look like the most stable signals. Because the splits differ and the sample is small, we do not draw firm conclusions about which modification is best.</p>
 </section>
 <section id="improved-classifier" class="level3">
 <h3 class="anchored" data-anchor-id="improved-classifier">Improved classifier</h3>
