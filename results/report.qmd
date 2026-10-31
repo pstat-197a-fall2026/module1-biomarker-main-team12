@@ -14,8 +14,6 @@ execute:
   cache: true
 ---
 
-Use this as a template. Keep the headers and remove all other text. In all, your report can be quite short. When it is complete, render and then push changes to your team repository.
-
 ```{r}
 # load any other packages and read data here
 library(tidyverse)
@@ -49,21 +47,15 @@ biomarker_raw <- read_csv("../data/biomarker-raw.csv",
 
 ## Abstract
 
-Write a brief one-paragraph abstract that describes the contents of your write-up.
-
-Hewitson et al. (2021) proposed a panel of serum proteins to distinguish boys with autism spectrum disorder (ASD) from typically developing (TD) boys. We replicated a simplified version of their analysis on 154 subjects and 1,317 proteins, then tested how sensitive it is to design choices. Log transformation fixed right-skewed protein levels, and a few subjects accounted for most extreme values. \[Task 3 result.\] The in-class 5-protein panel had a mean test AUROC of 0.81 across 50 random splits, lower than its 0.88 on a single split. A 3-protein panel (DERM, IgD, MAPK2) reached 0.85, so it is simpler with comparable accuracy, but not a proven improvement. The in-class panel itself was not perfectly reproducible across runs, so any single panel should be read with caution.
+Hewitson et al. (2021), a paper later retracted, proposed a panel of serum proteins to distinguish boys with autism spectrum disorder (ASD) from typically developing (TD) boys. We replicated a simplified version of their analysis on 154 subjects and 1,317 proteins, then tested how sensitive it is to design choices. Log transformation fixed right-skewed protein levels, and a few subjects accounted for most extreme values. Choosing proteins on a training partition alone lowered single-split test AUROC from 0.88 to 0.85, while using the top 15 proteins per method or taking the union of the two lists did not help. The in-class 5-protein panel had a mean test AUROC of 0.81 across 50 random splits, lower than its 0.88 on a single split. A 3-protein panel (DERM, IgD, MAPK2) reached 0.85, so it is simpler with comparable accuracy, but not a proven improvement. The in-class panel itself was not perfectly reproducible across runs, so any single panel should be read with caution.
 
 ## Dataset
-
-Write a brief data description, including: how data were obtained; sample characteristics; variables measured; and data preprocessing. This can be largely based on the source paper and should not exceed 1-2 paragraphs.
 
 The data come from Hewitson et al. (2021), a study of serum proteins in boys with and without autism spectrum disorder (ASD). Fasting blood samples were collected from 154 boys aged 18 months to 8 years: 76 with ASD (mean age 5.6 years) and 78 typically developing (TD) boys (mean age 5.7 years). Serum was analyzed on SomaLogic's SOMAscan 1.3K platform, which measured 1,317 proteins per sample. ASD was diagnosed by a clinical psychologist using the ADOS and ADI-R. The ADOS total score, a measure of symptom severity, is only available for the ASD group (mean 14.9, SD 5.05), so it was not used as a predictor in our classification analysis.
 
 The published analysis removed 192 proteins that failed quality control, leaving 1,125. Our analysis keeps all 1,317. Following the paper, protein levels were log10 transformed, centered and scaled, and values beyond 3 standard deviations from the mean were trimmed to -3 or 3. The cleaned data contain a group label (ASD or TD), the ADOS score, and the 1,317 protein measurements for each of the 154 subjects.
 
 ## Summary of published analysis
-
-Summarize the methodology of the paper in 1-3 paragraphs. You need not explain the methods in depth as we did in class; just indicate what methods were used and how they were combined. If possible, include a diagram that depicts the methodological design. (Quarto has support for [GraphViz and Mermaid flowcharts](https://quarto.org/docs/authoring/diagrams.html).) Provide key results: the proteins selected for the classifier and the estimated accuracy.
 
 The authors searched for a small panel of proteins that separates ASD from TD boys. They selected the top 10 proteins by three methods: random forest importance (averaged over 1,000 forests), t-tests between groups, and correlation with ADOS total score. Five proteins appeared in all three lists (MAPK14, IgD, DERM, EPHB2, suPAR) and were called the core panel. They then added the other 13 proteins one at a time and kept four that improved accuracy (ROR1, GI24, eIF-4H, ARSB), giving a 9-protein panel. Each panel was evaluated with logistic regression, using 80/20 train/test splits repeated 1,000 times. The 9-protein panel reached a test AUROC of about 0.86, with sensitivity about 0.83 and specificity about 0.84.
 
@@ -84,8 +76,6 @@ flowchart LR
 ```
 
 ## Findings
-
-Summarize your findings here. I've included some subheaders in a way that seems natural to me; you can structure this section however you like.
 
 ### Impact of preprocessing and outliers
 
@@ -146,27 +136,34 @@ group_summary
 slice_max(subject_outliers, n_outliers, n = 5)
 ```
 
-TD subjects averaged more outliers than ASD subjects (17.6 vs. 13.3), but the medians were identical (8.5). The gap comes from a few extreme subjects like 154 and 108, not a general TD pattern. Of the eight subjects with the most outliers, five were TD and three were ASD, which is too few to show a real group difference. We see no clear difference between groups.
+TD subjects averaged more outliers than ASD subjects (17.6 vs. 13.2), but the medians were identical (8.5). The gap comes from a few extreme subjects like 154 and 108, not a general TD pattern. Of the eight subjects with the most outliers, five were TD and three were ASD, which is too few to show a real group difference. We see no clear difference between groups.
 
 Even the typical subject sits above what a normal distribution would give. A 3 SD cutoff across 1,317 proteins predicts about 3.6 outliers per subject, versus a median of 8.5 here. Since a small number of subjects contribute a large share of the extreme values, trimming limits how much they can sway the t-tests and the random forest.
 
 ### Methodological variations
 
-Task 3
+**Task 3**
 
 We tried the three modifications one at a time. Each was evaluated with a single 80/20 split, so test sets contain only 31 subjects and the results are noisy: one misclassified subject changes sensitivity by about 0.06. For comparison, the in-class panel (DERM, RELT, MRC2, IgD, Cadherin-5) had a test AUROC of 0.883 and accuracy of 0.774.
 
-Training partition. Choosing proteins using only the training subjects gave a 4-protein panel (DERM, IgD, TSP4, MRC2). It shares DERM, IgD, and MRC2 with the in-class panel. Test AUROC dropped from 0.883 to 0.846 and accuracy from 0.774 to 0.710, with sensitivity falling from 0.812 to 0.688 and specificity unchanged at 0.733. This is the expected direction, since in the in-class analysis the test subjects helped choose the proteins, which makes its results optimistic.
+| Panel                 | Proteins | Sensitivity | Specificity | Accuracy | AUROC |
+|-----------------------|----------|-------------|-------------|----------|-------|
+| In-class              | 5        | 0.812       | 0.733       | 0.774    | 0.883 |
+| Training partition    | 4        | 0.688       | 0.733       | 0.710    | 0.846 |
+| Top 15 per method     | 8        | 0.647       | 0.786       | 0.710    | 0.857 |
+| Union of top 10 lists | 16       | 0.667       | 0.789       | 0.742    | 0.781 |
 
-More proteins per method. Using the top 15 from each method gave an 8-protein panel (DERM, RELT, IgD, PTN, FSTL1, MAPK2, TGF-b R III, gp130). Test AUROC was 0.857 and accuracy 0.710, so a larger list did not improve performance on this split.
+**Training partition.** Choosing proteins using only the training subjects gave a 4-protein panel (DERM, IgD, TSP4, MRC2). It shares DERM, IgD, and MRC2 with the in-class panel. Test AUROC dropped from 0.883 to 0.846 and accuracy from 0.774 to 0.710, with sensitivity falling from 0.812 to 0.688 and specificity unchanged at 0.733. This is the expected direction, since in the in-class analysis the test subjects helped choose the proteins, which makes its results optimistic.
 
-Fuzzy intersection. Taking the union of the two top-10 lists gave 16 proteins. Test AUROC was 0.781, the lowest of the three, with accuracy 0.742. With only 123 training subjects, a 16-protein model likely overfits.
+**More proteins per method.** Using the top 15 from each method gave an 8-protein panel (DERM, RELT, IgD, PTN, FSTL1, MAPK2, TGF-b R III, gp130). Test AUROC was 0.857 and accuracy 0.710, so a larger list did not improve performance on this split.
+
+**Fuzzy intersection.** Taking the union of the two top-10 lists gave 16 proteins. Test AUROC was 0.781, the lowest of the three, with accuracy 0.742. With only 123 training subjects, a 16-protein model likely overfits.
 
 DERM and IgD appeared in every panel we built, so they look like the most stable signals. Because the splits differ and the sample is small, we do not draw firm conclusions about which modification is best.
 
 ### Improved classifier
 
-Task 4
+**Task 4**
 
 We looked for a simpler panel with comparable accuracy to the in-class panel (DERM, RELT, MRC2, IgD, Cadherin-5). The in-class single-split AUROC of 0.883 is optimistic, since proteins were chosen using all 154 subjects. So we benchmarked everything on the same 50 random 75/25 splits, stratified by group.
 
@@ -179,10 +176,12 @@ On each split we fit a LASSO logistic regression with 5-fold CV on the training 
 | LASSO, `lambda.min`       | 0.819           | 0.047 | 40.0     |
 | DERM + IgD + MAPK2        | 0.848           | 0.046 | 3        |
 
-![Test AUROC across 50 random splits.](task4-boxplot1.png)
+![Test AUROC across 50 random splits.](task4-boxplot1.png){alt="Test AUROC across 50 random splits."}
 
-![In-class panel vs. 3-protein panel across 50 splits.](task4-boxplot2.png)
+![In-class panel vs. 3-protein panel across 50 splits.](task4-boxplot2.png){alt="In-class panel vs. 3-protein panel across 50 splits."}
 
 Neither LASSO panel was simpler or better. The 3-protein panel scored 0.042 higher than the baseline on average (paired SD 0.041), which is less than the baseline's SD of 0.062. So we claim **comparable accuracy with fewer proteins**, not a proven improvement.
 
-*Caveats:* the in-class panel and the 3-protein panel were both chosen using data that also ended up in test sets, so both estimates are somewhat optimistic. With 154 subjects, AUROC swings a lot across splits, so small differences shouldn't be over-read.
+*Caveats:* the in-class panel and the 3-protein panel were both chosen using data that also ended up in test sets, so both estimates are somewhat optimistic. The 3-protein panel in particular came from LASSO counts on the same 50 splits we then used to evaluate it, which favors it over the baseline, so the true gain is probably smaller. With 154 subjects, AUROC swings a lot across splits, so small differences shouldn't be over-read.
+
+*Reproducibility:* the in-class panel we benchmark against (DERM, RELT, MRC2, IgD, Cadherin-5) is taken from the class results. When we reran the in-class code we got a different panel (DERM, RELT, IgD, FSTL1), because the random forest top 10 changes from run to run. Across ten forests fit with different seeds, DERM and IgD were in the top 10 every time and RELT in nine, while FSTL1 appeared in six, Cadherin-5 in three, and MRC2 in none.
